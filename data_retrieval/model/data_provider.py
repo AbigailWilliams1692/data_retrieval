@@ -36,6 +36,7 @@ class DataProvider(DataModule, ABC):
     # Class Attributes
     #################################################
     name: str = "BaseDataProvider"
+    type: str = "DataProvider"
 
     #################################################
     # Constructor
@@ -47,20 +48,21 @@ class DataProvider(DataModule, ABC):
         :param data_provider_id: str: Unique identifier for the data provider.
         :param logger: logging.Logger: Logger instance for logging.
         """
+        # Super Constructor
         super().__init__(instance_id=data_provider_id, logger=logger)
 
     #################################################
     # Abstract Methods
     #################################################
     @abstractmethod
-    def fetch_data(self, data_name: str, data_type: type, *args, **kwargs) -> Any:
+    async def fetch_data(self, data_name: str, data_type: type, *args, **kwargs) -> Any:
         """
         Abstract method to fetch data based on a query.
 
         :param data_name: str: The name of the data point to fetch.
         :param data_type: type: The expected type of the data to be fetched.
-        :param args: Variable length argument list.
-        :param kwargs: Arbitrary keyword arguments.
+        :param args: Additional positional arguments.
+        :param kwargs: Additional keyword arguments.
         :return: Any: The fetched data as a dictionary.
         """
         raise NotImplementedError("Subclasses must implement this method.")

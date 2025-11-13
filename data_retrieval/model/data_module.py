@@ -34,6 +34,7 @@ class DataModule(ABC):
     # Class Attributes
     #################################################
     name: str = "BaseDataModule"
+    type: str = "DataModule"
 
     #################################################
     # Constructor
@@ -53,3 +54,30 @@ class DataModule(ABC):
 
         # Logger
         self.logger = logger
+
+        # Status
+        self.is_preoccupied = False
+
+    #################################################
+    # Concrete Methods
+    #################################################
+    def get_instance_id(self) -> str:
+        """Get the unique identifier of the data module instance.
+
+        :return: str: Unique identifier of the data module instance.
+        """
+        return self.instance_id
+
+    def get_logger(self) -> logging.Logger:
+        """Get the logger instance.
+
+        :return: logging.Logger: Logger instance.
+        """
+        return self.logger
+
+    def get_status(self) -> bool:
+        """Get the preoccupation status of the data module.
+
+        :return: bool: Preoccupation status of the data module.
+        """
+        return self.is_preoccupied

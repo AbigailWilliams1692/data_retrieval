@@ -36,6 +36,7 @@ class DataProcessor(DataModule, ABC):
     # Class Attributes
     #################################################
     name: str = "BaseDataProcessor"
+    type: str = "DataProcessor"
 
     #################################################
     # Constructor
@@ -47,18 +48,21 @@ class DataProcessor(DataModule, ABC):
         :param data_processor_id: str: Unique identifier for the data provider.
         :param logger: logging.Logger: Logger instance for logging.
         """
+        # Super Constructor
         super().__init__(instance_id=data_processor_id, logger=logger)
 
     #################################################
     # Abstract Methods
     #################################################
     @abstractmethod
-    def process_data(self, data_name: str, data: Any) -> Any:
+    async def process_data(self, data_name: str, data: Any, *args, **kwargs) -> Any:
         """
         Abstract method to process data.
 
         :param data_name: The name of the data to be processed.
         :param data: The input data to be processed.
+        :param args: Additional positional arguments.
+        :param kwargs: Additional keyword arguments.
         :return: The processed data.
         """
         raise NotImplementedError("Subclasses must implement this method.")
