@@ -3,8 +3,8 @@
 # File: query_result.py
 # Description: Standardized query result container
 # Author: AbigailWilliams1692
-# Created: 2025-11-13
-# Updated: 2025-01-14
+# Created: 2026-01-14
+# Updated: 2026-01-14
 #######################################################################
 
 #######################################################################

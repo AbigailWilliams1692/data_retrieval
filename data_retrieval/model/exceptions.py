@@ -1,4 +1,13 @@
 #######################################################################
+# Project: Data Retrieval Module
+# File: exceptions.py
+# Description: Exception classes for data providers
+# Author: AbigailWilliams1692
+# Created: 2026-01-14
+# Updated: 2026-01-14
+#######################################################################
+
+#######################################################################
 # Exception Classes
 #######################################################################
 class DataProviderError(Exception):
