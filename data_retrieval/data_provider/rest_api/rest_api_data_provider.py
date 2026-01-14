@@ -51,11 +51,18 @@ class RestAPI_DataProvider(DataProvider[Any]):
                 print(user)
     """
     
+    #################################################
+    # Class Attributes
+    #################################################
+    __name = "RestAPI_DataProvider"
+    __type = "RestAPI_DataProvider"
+    __base_url: str = ""
+    
     def __init__(
         self,
         base_url: str,
         headers: Optional[Dict[str, str]] = None,
-        timeout: float = 30.0,
+        timeout: float = 60.0,
         verify_ssl: bool = True,
         **kwargs
     ):
@@ -68,7 +75,6 @@ class RestAPI_DataProvider(DataProvider[Any]):
         :param verify_ssl: Whether to verify SSL certificates
         """
         super().__init__(**kwargs)
-        self._base_url = base_url.rstrip('/')
         self._default_headers = headers or {}
         self._timeout = timeout
         self._verify_ssl = verify_ssl
@@ -76,7 +82,9 @@ class RestAPI_DataProvider(DataProvider[Any]):
         self._connection_config = {}
     
     def _connect(self) -> None:
-        """Establish HTTP session."""
+        """
+        Establish HTTP session.
+        """
         self._session = Session()
         self._session.headers.update(self._default_headers)
         self._session.verify = self._verify_ssl
@@ -84,7 +92,7 @@ class RestAPI_DataProvider(DataProvider[Any]):
         # Test connection
         try:
             response = self._session.get(
-                f"{self._base_url}/health",
+                f"{self.__base_url}/health",
                 timeout=self._timeout
             )
             response.raise_for_status()
@@ -92,7 +100,9 @@ class RestAPI_DataProvider(DataProvider[Any]):
             raise ConnectionError(f"Failed to connect to API: {e}") from e
     
     def _disconnect(self) -> None:
-        """Close HTTP session."""
+        """
+        Close HTTP session.
+        """
         if self._session:
             self._session.close()
             self._session = None
@@ -120,7 +130,7 @@ class RestAPI_DataProvider(DataProvider[Any]):
             raise ConnectionError("Not connected to API")
         
         # Build URL
-        url = urljoin(self._base_url + "/", endpoint.lstrip('/'))
+        url = urljoin(self.__base_url + "/", endpoint.lstrip("/"))
         
         # Merge headers
         request_headers = self._default_headers.copy()
@@ -129,18 +139,18 @@ class RestAPI_DataProvider(DataProvider[Any]):
         
         # Prepare request arguments
         request_kwargs = {
-            'headers': request_headers,
-            'timeout': self._timeout,
-            'params': params,
+            "headers": request_headers,
+            "timeout": self._timeout,
+            "params": params,
             **kwargs
         }
         
         # Add request body for methods that support it
-        if method.upper() in ['POST', 'PUT', 'PATCH'] and data:
+        if method.upper() in ["POST", "PUT", "PATCH"] and data:
             if isinstance(data, dict):
-                request_kwargs['json'] = data
+                request_kwargs["json"] = data
             else:
-                request_kwargs['data'] = data
+                request_kwargs["data"] = data
         
         try:
             # Make request
@@ -173,17 +183,17 @@ class RestAPI_DataProvider(DataProvider[Any]):
     
     def _parse_response(self, response: Response) -> List[Any]:
         """Parse API response and extract data."""
-        content_type = response.headers.get('content-type', '').lower()
+        content_type = response.headers.get("content-type", "").lower()
         
-        if 'application/json' in content_type:
+        if "application/json" in content_type:
             data = response.json()
             # Handle different response structures
             if isinstance(data, dict):
                 # Common patterns: data.results, data.items, data.data
-                for key in ['results', 'items', 'data', 'content']:
+                for key in ["results", "items", "data", "content"]:
                     if key in data:
                         return data[key]
-                # If it's a single object, wrap in list
+                # If it"s a single object, wrap in list
                 return [data]
             elif isinstance(data, list):
                 return data
@@ -196,28 +206,28 @@ class RestAPI_DataProvider(DataProvider[Any]):
     def _extract_pagination_info(self, response: Response) -> tuple[int, Dict[str, Any]]:
         """Extract pagination information from response."""
         metadata = {
-            'status_code': response.status_code,
-            'headers': dict(response.headers),
-            'url': response.url,
-            'request_time': response.elapsed.total_seconds()
+            "status_code": response.status_code,
+            "headers": dict(response.headers),
+            "url": response.url,
+            "request_time": response.elapsed.total_seconds()
         }
         
         total_count = 0
         
         # Try to extract total count from response
-        content_type = response.headers.get('content-type', '').lower()
-        if 'application/json' in content_type:
+        content_type = response.headers.get("content-type", "").lower()
+        if "application/json" in content_type:
             try:
                 data = response.json()
                 if isinstance(data, dict):
                     # Common pagination fields
-                    for key in ['total', 'count', 'total_items', 'totalCount']:
+                    for key in ["total", "count", "total_items", "totalCount"]:
                         if key in data:
                             total_count = int(data[key])
                             break
                     
                     # Add pagination metadata
-                    pagination_fields = ['page', 'page_size', 'pages', 'next', 'previous', 'has_next', 'has_previous', 'total', 'count', 'total_items', 'totalCount']
+                    pagination_fields = ["page", "page_size", "pages", "next", "previous", "has_next", "has_previous", "total", "count", "total_items", "totalCount"]
                     pagination_meta = {k: v for k, v in data.items() if k in pagination_fields}
                     metadata.update(pagination_meta)
             except (ValueError, KeyError):
@@ -232,7 +242,7 @@ class RestAPI_DataProvider(DataProvider[Any]):
                 return False
             
             response = self._session.get(
-                f"{self._base_url}/health",
+                f"{self.__base_url}/health",
                 timeout=5.0
             )
             return response.status_code == 200
@@ -281,7 +291,7 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
         :param connector_limit: Maximum number of concurrent connections
         """
         super().__init__(**kwargs)
-        self._base_url = base_url.rstrip('/')
+        self.__base_url = base_url.rstrip("/")
         self._default_headers = headers or {}
         self._timeout = timeout
         self._verify_ssl = verify_ssl
@@ -306,13 +316,15 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
         
         # Test connection
         try:
-            async with self._session.get(f"{self._base_url}/health") as response:
+            async with self._session.get(f"{self.__base_url}/health") as response:
                 response.raise_for_status()
         except aiohttp.ClientError as e:
             raise ConnectionError(f"Failed to connect to API: {e}") from e
     
     async def _disconnect(self) -> None:
-        """Close async HTTP session."""
+        """
+        Close async HTTP session.
+        """
         if self._session:
             await self._session.close()
             self._session = None
@@ -340,7 +352,7 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
             raise ConnectionError("Not connected to API")
         
         # Build URL
-        url = urljoin(self._base_url + "/", endpoint.lstrip('/'))
+        url = urljoin(self.__base_url + "/", endpoint.lstrip("/"))
         
         # Merge headers
         request_headers = self._default_headers.copy()
@@ -354,7 +366,7 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
                 url,
                 params=params,
                 headers=request_headers,
-                json=data if isinstance(data, dict) and method.upper() in ['POST', 'PUT', 'PATCH'] else None,
+                json=data if isinstance(data, dict) and method.upper() in ["POST", "PUT", "PATCH"] else None,
                 data=data if not isinstance(data, dict) else None,
                 **kwargs
             ) as response:
@@ -385,18 +397,20 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
             raise QueryError(f"API request failed: {e}") from e
     
     async def _parse_async_response(self, response: aiohttp.ClientResponse) -> List[Any]:
-        """Parse async API response and extract data."""
-        content_type = response.headers.get('content-type', '').lower()
+        """
+        Parse async API response and extract data.
+        """
+        content_type = response.headers.get("content-type", "").lower()
         
-        if 'application/json' in content_type:
+        if "application/json" in content_type:
             data = await response.json()
             # Handle different response structures
             if isinstance(data, dict):
                 # Common patterns: data.results, data.items, data.data
-                for key in ['results', 'items', 'data', 'content']:
+                for key in ["results", "items", "data", "content"]:
                     if key in data:
                         return data[key]
-                # If it's a single object, wrap in list
+                # If it"s a single object, wrap in list
                 return [data]
             elif isinstance(data, list):
                 return data
@@ -408,29 +422,31 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
             return [text]
     
     async def _extract_async_pagination_info(self, response: aiohttp.ClientResponse) -> tuple[int, Dict[str, Any]]:
-        """Extract pagination information from async response."""
+        """
+        Extract pagination information from async response.
+        """
         metadata = {
-            'status_code': response.status,
-            'headers': dict(response.headers),
-            'url': str(response.url),
+            "status_code": response.status,
+            "headers": dict(response.headers),
+            "url": str(response.url),
         }
         
         total_count = 0
         
         # Try to extract total count from response
-        content_type = response.headers.get('content-type', '').lower()
-        if 'application/json' in content_type:
+        content_type = response.headers.get("content-type", "").lower()
+        if "application/json" in content_type:
             try:
                 data = await response.json()
                 if isinstance(data, dict):
                     # Common pagination fields
-                    for key in ['total', 'count', 'total_items', 'totalCount']:
+                    for key in ["total", "count", "total_items", "totalCount"]:
                         if key in data:
                             total_count = int(data[key])
                             break
                     
                     # Add pagination metadata
-                    pagination_fields = ['page', 'page_size', 'pages', 'next', 'previous', 'has_next', 'has_previous', 'total', 'count', 'total_items', 'totalCount']
+                    pagination_fields = ["page", "page_size", "pages", "next", "previous", "has_next", "has_previous", "total", "count", "total_items", "totalCount"]
                     pagination_meta = {k: v for k, v in data.items() if k in pagination_fields}
                     metadata.update(pagination_meta)
             except (ValueError, KeyError):
@@ -439,12 +455,14 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
         return total_count, metadata
     
     async def health_check(self) -> bool:
-        """Check API health status asynchronously."""
+        """
+        Check API health status asynchronously.
+        """
         try:
             if not self._session:
                 return False
             
-            async with self._session.get(f"{self._base_url}/health", timeout=5.0) as response:
+            async with self._session.get(f"{self.__base_url}/health", timeout=5.0) as response:
                 return response.status == 200
         except Exception:
             return False
@@ -479,7 +497,7 @@ class RestAPI_AsyncDataProvider(AsyncDataProvider[Any]):
                 final_results.append(QueryResult(
                     data=[],
                     total_count=0,
-                    metadata={'error': str(result), 'endpoint': endpoints[i]}
+                    metadata={"error": str(result), "endpoint": endpoints[i]}
                 ))
             else:
                 final_results.append(result)
