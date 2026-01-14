@@ -278,7 +278,7 @@ class DataProvider(DataModule, Generic[T]):
         :return: True if valid, False otherwise.
         :raises ValidationError: If validation fails critically.
         """
-        raise True
+        return True
 
     def transform(self, data: Any) -> T:
         """
@@ -288,7 +288,7 @@ class DataProvider(DataModule, Generic[T]):
         :param data: Raw data from the source.
         :return: Transformed data of type T.
         """
-        raise data
+        return data
     
     def health_check(self) -> bool:
         """
