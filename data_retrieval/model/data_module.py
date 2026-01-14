@@ -112,11 +112,13 @@ class DataModule(ABC):
         """
         self.__logger = logger
 
-    def refresh_logger(self) -> None:
+    def refresh_logger(self) -> logging.Logger:
         """
         Refresh the logger instance.
         """
-        return logging.getLogger(name=self.__class__, log_level=self.__log_level)
+        logger = logging.getLogger(name=self.__class__.__name__)
+        logger.setLevel(self.__log_level)
+        return logger
 
     def get_log_level(self) -> int:
         """

@@ -1,3 +1,3 @@
-from model.data_module import DataModule
-from model.data_provider import DataProvider, AsyncDataProvider
-from model.query_result import QueryResult
+from data_retrieval.model.data_module import DataModule
+from data_retrieval.model.data_provider import DataProvider, AsyncDataProvider
+from data_retrieval.model.query_result import QueryResult

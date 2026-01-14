@@ -22,7 +22,6 @@ from typing import (
     TypeVar,
     Optional,
     Dict,
-    List,
     Iterator,
     Callable,
 )
@@ -60,7 +59,7 @@ class ProviderStatus(Enum):
 #######################################################################
 # Data Provider Class
 #######################################################################
-class DataProvider(ABC, DataModule, Generic[T]):
+class DataProvider(DataModule, Generic[T]):
     """
     Abstract base class for data providers with standardized synchronous API interface.
 
@@ -270,7 +269,6 @@ class DataProvider(ABC, DataModule, Generic[T]):
     #################################################
     # Optional Hook Methods
     #################################################
-    @abstractmethod
     def validate(self, data: T) -> bool:
         """
         Validate data before processing.
@@ -280,9 +278,8 @@ class DataProvider(ABC, DataModule, Generic[T]):
         :return: True if valid, False otherwise.
         :raises ValidationError: If validation fails critically.
         """
-        raise NotImplementedError("Subclasses must implement this method.")
+        raise True
 
-    @abstractmethod
     def transform(self, data: Any) -> T:
         """
         Transform raw data from the source into the target type T.
@@ -291,7 +288,7 @@ class DataProvider(ABC, DataModule, Generic[T]):
         :param data: Raw data from the source.
         :return: Transformed data of type T.
         """
-        raise NotImplementedError("Subclasses must implement this method.")
+        raise data
     
     def health_check(self) -> bool:
         """
@@ -360,7 +357,7 @@ class DataProvider(ABC, DataModule, Generic[T]):
 #######################################################################
 # Asynchronous Data Provider Class
 #######################################################################
-class AsyncDataProvider(ABC, DataModule, Generic[T]):
+class AsyncDataProvider(DataModule, Generic[T]):
     """
     Abstract base class for asynchronous data providers with standardized async API interface.
 
