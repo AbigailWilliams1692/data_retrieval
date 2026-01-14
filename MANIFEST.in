@@ -1,0 +1,36 @@
+# Include additional files in the distribution
+
+# Documentation
+include README.md
+include CHANGELOG.md
+include LICENSE
+
+# Configuration files
+include pyproject.toml
+include setup.py
+
+# Type information
+include data_retrieval/py.typed
+
+# Test files (optional - for source distributions)
+recursive-include tests *.py
+include pytest.ini
+include requirements-test.txt
+
+# Development files (optional)
+include Makefile
+recursive-include .benchmarks *.py
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .pytest_cache
+global-exclude .mypy_cache
+global-exclude .coverage
+global-exclude htmlcov
+global-exclude *.egg-info
+global-exclude build
+global-exclude dist

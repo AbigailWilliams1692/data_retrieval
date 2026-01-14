@@ -1,0 +1,2 @@
+# This file indicates that the data_retrieval package is a typed package
+# It enables type checkers to understand that this package contains type annotations

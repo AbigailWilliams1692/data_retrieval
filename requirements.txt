@@ -1,0 +1,9 @@
+# Core dependencies for Data Retrieval Module
+# Minimum required dependencies for basic functionality
+
+# For Python < 3.10 compatibility
+typing-extensions>=4.0.0; python_version<"3.10"
+
+# Optional: For async operations (install with pip install data-retrieval-module[async])
+# aiohttp>=3.8.0
+# asyncio-mqtt>=0.13.0
