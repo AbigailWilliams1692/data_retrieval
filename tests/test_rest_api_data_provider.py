@@ -18,7 +18,7 @@ from data_retrieval.model.query_result import QueryResult
 from data_retrieval.model.exceptions import ConnectionError, QueryError
 
 
-class TestRestDataProvider(unittest.TestCase):
+class Test_RestAPI_DataProvider(unittest.TestCase):
     """Test cases for RestDataProvider."""
     
     def setUp(self):
@@ -247,7 +247,7 @@ class TestRestDataProvider(unittest.TestCase):
             self.provider.fetch(endpoint="/users")
 
 
-class TestRestAPI_AsyncDataProvider(unittest.IsolatedAsyncioTestCase):
+class Test_RestAPI_AsyncDataProvider(unittest.IsolatedAsyncioTestCase):
     """Test cases for RestAPI_AsyncDataProvider."""
     
     def setUp(self):
