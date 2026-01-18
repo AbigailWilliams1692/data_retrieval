@@ -81,7 +81,7 @@ class Database_DataProvider(DataProvider, ABC):
     @abstractmethod
     def sql_query(self, sql: str, *args, **kwargs) -> Any:
         """
-        Posts the SQL query to the database and retrieve rge dara accordingly.
+        Posts the SQL query to the database and retrieves data accordingly.
 
         :param sql: the SQL query string.
         :return: the queried data.
