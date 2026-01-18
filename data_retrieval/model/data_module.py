@@ -4,7 +4,7 @@
 # Description: Abstract base class for aall data modules
 # Author: AbigailWilliams1692
 # Created: 2025-11-13
-# Updated: 2026-01-14
+# Updated: 2026-01-18
 #######################################################################
 
 #######################################################################
@@ -37,7 +37,7 @@ class DataModule(ABC):
     #################################################
     def __init__(
         self,
-        instance_id: Optional[str] = None,
+        instance_id: Optional[int] = None,
         logger: Optional[logging.Logger] = None,
         log_level: Optional[int] = logging.INFO,
     ) -> None:
@@ -48,17 +48,17 @@ class DataModule(ABC):
         :param logger: logging.Logger: Logger instance for logging.
         """
         # DataProvider ID
-        self.__instance_id = instance_id or str(id(self))
+        self._instance_id = instance_id or id(self)
         
 
         # Log Level
-        self.__log_level = log_level
+        self._log_level = log_level
 
         # Logger
-        self.__logger = logger or self.refresh_logger()
+        self._logger = logger or self.refresh_logger()
 
         # Status
-        self.__status = None
+        self._status = None
 
     #################################################
     # Getter & Setter Methods
@@ -86,7 +86,7 @@ class DataModule(ABC):
 
         :return: str: Unique identifier of the data module instance.
         """
-        return self.__instance_id
+        return self._instance_id
 
     def set_instance_id(self, instance_id: str) -> None:
         """
@@ -94,7 +94,7 @@ class DataModule(ABC):
 
         :param instance_id: str: Unique identifier of the data module instance.
         """
-        self.__instance_id = instance_id
+        self._instance_id = instance_id
 
     def get_logger(self) -> logging.Logger:
         """
@@ -102,7 +102,7 @@ class DataModule(ABC):
 
         :return: logging.Logger: Logger instance.
         """
-        return self.__logger
+        return self._logger
 
     def set_logger(self, logger: logging.Logger) -> None:
         """
@@ -110,14 +110,14 @@ class DataModule(ABC):
 
         :param logger: logging.Logger: Logger instance.
         """
-        self.__logger = logger
+        self._logger = logger
 
     def refresh_logger(self) -> logging.Logger:
         """
         Refresh the logger instance.
         """
         logger = logging.getLogger(name=self.__class__.__name__)
-        logger.setLevel(self.__log_level)
+        logger.setLevel(self._log_level)
         return logger
 
     def get_log_level(self) -> int:
@@ -126,7 +126,7 @@ class DataModule(ABC):
 
         :return: int: Log level of the logger instance.
         """
-        return self.__log_level
+        return self._log_level
     
     def set_log_level(self, log_level: int) -> None:
         """
@@ -134,15 +134,14 @@ class DataModule(ABC):
 
         :param log_level: int: Log level of the logger instance.
         """
-        self.__log_level = log_level
-        self.__logger = self.refresh_logger()
+        self._logger.setLevel(level=log_level)
 
     def get_status(self) -> Any:
         """Get the preoccupation status of the data module.
 
         :return: Any: Preoccupation status of the data module.
         """
-        return self.__status
+        return self._status
 
     def set_status(self, status: Any) -> None:
         """
@@ -150,4 +149,4 @@ class DataModule(ABC):
 
         :param status: Any: Preoccupation status of the data module.
         """
-        self.__status = status
+        self._status = status

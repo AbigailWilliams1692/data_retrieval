@@ -14,7 +14,7 @@ import unittest
 
 from data_retrieval.data_provider.database import Database_DataProvider, Database_AsyncDataProvider, DatabaseConfig
 from data_retrieval.model.query_result import QueryResult
-from data_retrieval.model.exceptions import ConnectionError, QueryError
+from data_retrieval.model.exceptions import DataProviderConnectionError, DataFetchError
 
 
 class TestDatabaseConfig(unittest.TestCase):
@@ -109,7 +109,7 @@ class Test_Database_DataProvider(unittest.TestCase):
         config = DatabaseConfig(database_type='sqlite', database='/invalid/path/test.db')
         provider = Database_DataProvider(config)
         
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(DataProviderConnectionError):
             provider._connect()
     
     @patch('psycopg2.connect')
@@ -359,7 +359,7 @@ class Test_Database_DataProvider(unittest.TestCase):
                 provider.execute("INSERT INTO users (name) VALUES (?)", params=['Bob'], commit=False)
                 # This will cause an error
                 provider.execute("INSERT INTO nonexistent_table VALUES (?)", params=['Charlie'], commit=False)
-        except QueryError:
+        except DataFetchError:
             pass  # Expected error
         
         # Verify only first insert was committed
@@ -390,12 +390,12 @@ class Test_Database_DataProvider(unittest.TestCase):
     
     def test_fetch_without_connection(self):
         """Test fetching without connection."""
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(DataProviderConnectionError):
             self.provider.fetch("SELECT 1")
     
     def test_execute_without_connection(self):
         """Test executing without connection."""
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(DataProviderConnectionError):
             self.provider.execute("SELECT 1")
 
 
@@ -581,7 +581,7 @@ class Test_Database_AsyncDataProvider(unittest.IsolatedAsyncioTestCase):
     
     async def test_fetch_without_connection_async(self):
         """Test fetching without async connection."""
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(DataProviderConnectionError):
             await self.provider.fetch("SELECT 1")
 
 

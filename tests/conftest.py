@@ -17,9 +17,9 @@ from unittest.mock import MagicMock, AsyncMock
 from typing import Generator, AsyncGenerator
 
 # Local Packages
-from data_retrieval.model.data_provider import DataProvider, AsyncDataProvider, ProviderStatus
+from data_retrieval.model.data_provider import DataProvider, AsyncDataProvider, DataProviderConnectionStatus
 from data_retrieval.model.query_result import QueryResult
-from data_retrieval.model.exceptions import DataProviderError, ConnectionError, QueryError
+from data_retrieval.model.exceptions import DataProviderError, DataProviderConnectionError, DataFetchError
 
 #######################################################################
 # Test Fixtures
@@ -149,7 +149,7 @@ def create_mock_provider_with_failure(fail_connect=False, fail_fetch=False):
         
         def _connect(self) -> None:
             if self.fail_connect:
-                raise ConnectionError("Connection failed")
+                raise DataProviderConnectionError("Connection failed")
             self._connected = True
         
         def _disconnect(self) -> None:
@@ -157,7 +157,7 @@ def create_mock_provider_with_failure(fail_connect=False, fail_fetch=False):
         
         def fetch(self, *args, **kwargs) -> QueryResult:
             if self.fail_fetch:
-                raise QueryError("Fetch failed")
+                raise DataFetchError("Fetch failed")
             return QueryResult(data=[], total_count=0)
     
     return FailingDataProvider(fail_connect, fail_fetch)
@@ -173,7 +173,7 @@ async def create_async_mock_provider_with_failure(fail_connect=False, fail_fetch
         
         async def _connect(self) -> None:
             if self.fail_connect:
-                raise ConnectionError("Connection failed")
+                raise DataProviderConnectionError("Connection failed")
             self._connected = True
         
         async def _disconnect(self) -> None:
@@ -181,7 +181,7 @@ async def create_async_mock_provider_with_failure(fail_connect=False, fail_fetch
         
         async def fetch(self, *args, **kwargs) -> QueryResult:
             if self.fail_fetch:
-                raise QueryError("Fetch failed")
+                raise DataFetchError("Fetch failed")
             return QueryResult(data=[], total_count=0)
     
     return FailingAsyncDataProvider(fail_connect, fail_fetch)

@@ -15,7 +15,7 @@ import aiohttp
 
 from data_retrieval.data_provider.rest_api import RestAPI_DataProvider, RestAPI_AsyncDataProvider
 from data_retrieval.model.query_result import QueryResult
-from data_retrieval.model.exceptions import ConnectionError, QueryError
+from data_retrieval.model.exceptions import DataProviderConnectionError, DataFetchError
 
 
 class Test_RestAPI_DataProvider(unittest.TestCase):
@@ -63,7 +63,7 @@ class Test_RestAPI_DataProvider(unittest.TestCase):
             mock_session_class.return_value = mock_session
             mock_session.get.side_effect = requests.exceptions.ConnectionError("Connection failed")
             
-            with self.assertRaises(ConnectionError):
+            with self.assertRaises(DataProviderConnectionError):
                 self.provider._connect()
     
     def test_disconnect(self):
@@ -234,7 +234,7 @@ class Test_RestAPI_DataProvider(unittest.TestCase):
         """Test fetching without established connection."""
         self.provider._session = None
         
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(DataProviderConnectionError):
             self.provider.fetch(endpoint="/users")
     
     def test_fetch_with_request_exception(self):
@@ -243,7 +243,7 @@ class Test_RestAPI_DataProvider(unittest.TestCase):
         mock_session.request.side_effect = requests.exceptions.RequestException("Request failed")
         self.provider._session = mock_session
         
-        with self.assertRaises(QueryError):
+        with self.assertRaises(DataFetchError):
             self.provider.fetch(endpoint="/users")
 
 
@@ -289,7 +289,7 @@ class Test_RestAPI_AsyncDataProvider(unittest.IsolatedAsyncioTestCase):
             mock_session_class.return_value = mock_session
             mock_session.get.side_effect = aiohttp.ClientError("Connection failed")
             
-            with self.assertRaises(ConnectionError):
+            with self.assertRaises(DataProviderConnectionError):
                 await self.provider._connect()
     
     async def test_disconnect(self):

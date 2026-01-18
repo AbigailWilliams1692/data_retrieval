@@ -17,9 +17,9 @@ import asyncio
 from typing import List, Dict, Any, Optional
 
 # Local Packages
-from data_retrieval.model.data_provider import DataProvider, AsyncDataProvider, ProviderStatus
+from data_retrieval.model.data_provider import DataProvider, AsyncDataProvider, DataProviderConnectionStatus
 from data_retrieval.model.query_result import QueryResult
-from data_retrieval.model.exceptions import DataProviderError, ConnectionError, QueryError
+from data_retrieval.model.exceptions import DataProviderError, DataProviderConnectionError, DataFetchError
 
 
 #######################################################################
@@ -61,7 +61,7 @@ class MockDataProvider(DataProvider[UserTestData]):
     def _connect(self) -> None:
         self._connection_attempts += 1
         if self._connection_config.get("should_fail", False):
-            raise ConnectionError("Mock connection failed")
+            raise DataProviderConnectionError("Mock connection failed")
     
     def _disconnect(self) -> None:
         self._disconnect_called = True
@@ -104,7 +104,7 @@ class MockAsyncDataProvider(AsyncDataProvider[UserTestData]):
     async def _connect(self) -> None:
         self._connection_attempts += 1
         if self._connection_config.get("should_fail", False):
-            raise ConnectionError("Mock connection failed")
+            raise DataProviderConnectionError("Mock connection failed")
     
     async def _disconnect(self) -> None:
         self._disconnect_called = True
@@ -143,38 +143,38 @@ class TestDataProvider(unittest.TestCase):
     
     def test_initialization(self):
         """Test provider initialization."""
-        self.assertEqual(self.provider._name, "DataProvider")
-        self.assertEqual(self.provider._type, "DataProvider")
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.DISCONNECTED)
+        self.assertEqual(self.provider.__name, "DataProvider")
+        self.assertEqual(self.provider.__type, "DataProvider")
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.DISCONNECTED)
         self.assertFalse(self.provider.is_connected())
     
     def test_connect_success(self):
         """Test successful connection."""
         self.provider.connect()
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.CONNECTED)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.CONNECTED)
         self.assertTrue(self.provider.is_connected())
         self.assertEqual(self.provider._connection_attempts, 1)
     
     def test_connect_failure(self):
         """Test connection failure."""
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(DataProviderConnectionError):
             self.provider.connect(should_fail=True)
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.ERROR)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.ERROR)
         self.assertFalse(self.provider.is_connected())
     
     def test_disconnect(self):
         """Test disconnection."""
         self.provider.connect()
         self.provider.disconnect()
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.DISCONNECTED)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.DISCONNECTED)
         self.assertTrue(self.provider._disconnect_called)
     
     def test_connection_context_manager(self):
         """Test connection context manager."""
         with self.provider.connection() as p:
             self.assertIs(p, self.provider)
-            self.assertEqual(self.provider.get_provider_status(), ProviderStatus.CONNECTED)
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.DISCONNECTED)
+            self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.CONNECTED)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.DISCONNECTED)
     
     def test_fetch_data(self):
         """Test data fetching."""
@@ -202,7 +202,7 @@ class TestDataProvider(unittest.TestCase):
         """Test fetch_or_raise with empty result."""
         # Mock empty result
         self.provider.fetch = MagicMock(return_value=QueryResult(data=[], total_count=0))
-        with self.assertRaises(QueryError):
+        with self.assertRaises(DataFetchError):
             self.provider.fetch_or_raise()
     
     def test_with_retry_success(self):
@@ -250,8 +250,8 @@ class TestDataProvider(unittest.TestCase):
     def test_get_set_methods(self):
         """Test getter and setter methods."""
         # Test provider status
-        self.provider.set_provider_status(ProviderStatus.ERROR)
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.ERROR)
+        self.provider.set_provider_status(DataProviderConnectionStatus.ERROR)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.ERROR)
         
         # Test connection config
         config = {"host": "localhost", "port": 5432}
@@ -277,28 +277,28 @@ class TestAsyncDataProvider(unittest.IsolatedAsyncioTestCase):
         """Test async provider initialization."""
         self.assertEqual(self.provider._name, "AsyncDataProvider")
         self.assertEqual(self.provider._type, "AsyncDataProvider")
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.DISCONNECTED)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.DISCONNECTED)
         self.assertFalse(self.provider.is_connected())
     
     async def test_connect_success(self):
         """Test successful async connection."""
         await self.provider.connect()
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.CONNECTED)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.CONNECTED)
         self.assertTrue(self.provider.is_connected())
         self.assertEqual(self.provider._connection_attempts, 1)
     
     async def test_connect_failure(self):
         """Test async connection failure."""
-        with self.assertRaises(ConnectionError):
+        with self.assertRaises(DataProviderConnectionError):
             await self.provider.connect(should_fail=True)
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.ERROR)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.ERROR)
         self.assertFalse(self.provider.is_connected())
     
     async def test_disconnect(self):
         """Test async disconnection."""
         await self.provider.connect()
         await self.provider.disconnect()
-        self.assertEqual(self.provider.get_provider_status(), ProviderStatus.DISCONNECTED)
+        self.assertEqual(self.provider.get_provider_status(), DataProviderConnectionStatus.DISCONNECTED)
         self.assertTrue(self.provider._disconnect_called)
     
     async def test_async_connection_context_manager(self):
@@ -334,7 +334,7 @@ class TestAsyncDataProvider(unittest.IsolatedAsyncioTestCase):
         """Test async fetch_or_raise with empty result."""
         # Mock empty result
         self.provider.fetch = AsyncMock(return_value=QueryResult(data=[], total_count=0))
-        with self.assertRaises(QueryError):
+        with self.assertRaises(DataFetchError):
             await self.provider.fetch_or_raise()
     
     async def test_with_retry_sync_success(self):
@@ -433,14 +433,14 @@ class TestProviderStatus(unittest.TestCase):
     
     def test_provider_status_values(self):
         """Test ProviderStatus enum values."""
-        self.assertEqual(ProviderStatus.DISCONNECTED.value, "disconnected")
-        self.assertEqual(ProviderStatus.CONNECTED.value, "connected")
-        self.assertEqual(ProviderStatus.ERROR.value, "error")
+        self.assertEqual(DataProviderConnectionStatus.DISCONNECTED.value, "disconnected")
+        self.assertEqual(DataProviderConnectionStatus.CONNECTED.value, "connected")
+        self.assertEqual(DataProviderConnectionStatus.ERROR.value, "error")
     
     def test_provider_status_comparison(self):
         """Test ProviderStatus enum comparison."""
-        self.assertEqual(ProviderStatus.DISCONNECTED, ProviderStatus.DISCONNECTED)
-        self.assertNotEqual(ProviderStatus.DISCONNECTED, ProviderStatus.CONNECTED)
+        self.assertEqual(DataProviderConnectionStatus.DISCONNECTED, DataProviderConnectionStatus.DISCONNECTED)
+        self.assertNotEqual(DataProviderConnectionStatus.DISCONNECTED, DataProviderConnectionStatus.CONNECTED)
 
 
 #######################################################################
@@ -459,8 +459,8 @@ class TestIntegration(unittest.TestCase):
     
     def test_exception_hierarchy(self):
         """Test exception class hierarchy."""
-        self.assertTrue(issubclass(ConnectionError, DataProviderError))
-        self.assertTrue(issubclass(QueryError, DataProviderError))
+        self.assertTrue(issubclass(DataProviderConnectionError, DataProviderError))
+        self.assertTrue(issubclass(DataFetchError, DataProviderError))
 
 
 #######################################################################

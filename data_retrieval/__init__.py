@@ -15,8 +15,8 @@ from data_retrieval.model.data_module import DataModule
 from data_retrieval.model.query_result import QueryResult
 from data_retrieval.model.exceptions import (
     DataProviderError,
-    ConnectionError,
-    QueryError,
+    DataProviderConnectionError,
+    DataFetchError,
     ValidationError
 )
 
@@ -41,8 +41,8 @@ __all__ = [
     
     # Exceptions
     "DataProviderError",
-    "ConnectionError",
-    "QueryError",
+    "DataProviderConnectionError",
+    "DataFetchError",
     "ValidationError",
     
     # REST API providers

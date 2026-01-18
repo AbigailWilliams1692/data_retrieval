@@ -4,7 +4,7 @@
 # Description: Abstract base class for data providers
 # Author: AbigailWilliams1692
 # Created: 2025-11-13
-# Updated: 2026-01-14
+# Updated: 2026-01-18
 #######################################################################
 
 #######################################################################
@@ -12,41 +12,29 @@
 #######################################################################
 # Standard Packages
 import logging
-import time
-from abc import ABC, abstractmethod
-from contextlib import contextmanager
+from abc import abstractmethod
+from collections.abc import Callable
 from enum import Enum
 from typing import (
     Any,
-    Generic,
-    TypeVar,
     Optional,
     Dict,
-    Iterator,
     Callable,
 )
 
 # Local Packages
 from data_retrieval.model.data_module import DataModule
 from data_retrieval.model.exceptions import (
-    DataProviderError,
-    ConnectionError,
-    QueryError,
+    DataProviderConnectionError,
+    DataMethodNotFoundError,
+    ReturnDataTypeNotMatchedError,
 )
-from data_retrieval.model.query_result import QueryResult
-
-
-
-#######################################################################
-# Constants
-#######################################################################
-T = TypeVar("T")
 
 
 #######################################################################
 # Enums & Data Classes
 #######################################################################
-class ProviderStatus(Enum):
+class DataProviderConnectionStatus(Enum):
     """
     Enumeration of provider connection states.
     """
@@ -59,45 +47,30 @@ class ProviderStatus(Enum):
 #######################################################################
 # Data Provider Class
 #######################################################################
-class DataProvider(DataModule, Generic[T]):
+class DataProvider(DataModule):
     """
     Abstract base class for data providers with standardized synchronous API interface.
 
     This class provides a unified interface for retrieving data from various sources
     (APIs, databases, files, etc.). Subclasses must implement the abstract methods
     to provide source-specific data retrieval logic.
-
-    Type Parameters:
-        T: The type of data entity this provider handles.
-
-    Example Usage:
-        class UserProvider(DataProvider[User]):
-            def _connect(self) -> None:
-                self._db = Database.connect(...)
-
-            def get_by_id(self, identifier: str) -> Optional[User]:
-                return self._db.users.find_one(id=identifier)
-
-            def fetch(self, filters=None, page=1, page_size=100) -> QueryResult[User]:
-                ...
     """
 
     #################################################
     # Class Attributes
     #################################################
-    _name: str = "DataProvider"
-    _type: str = "DataProvider"
+    __name: str = "DataProvider"
+    __type: str = "DataProvider"
 
     #################################################
     # Constructor
     #################################################
     def __init__(
         self,
-        instance_id: Optional[str] = None,
+        instance_id: Optional[int] = None,
         logger: Optional[logging.Logger] = None,
         log_level: Optional[int] = logging.INFO,
-        connection_config: Optional[Dict[str, Any]] = None,
-        auto_connect: bool = False,
+        **config,
     ) -> None:
         """
         Initialize the data provider.
@@ -105,8 +78,8 @@ class DataProvider(DataModule, Generic[T]):
         :param instance_id: Unique identifier for this provider instance.
         :param logger: Logger instance for logging operations.
         :param log_level: Logging level for the provider.
-        :param connection_config: Connection configuration parameters.
-        :param auto_connect: If True, automatically connect on initialization.
+        :param data_methods: Dictionary of data retrieval methods.
+        :param config: Additional configuration parameters.
         """
         # Initialize the base DataModule
         super().__init__(
@@ -115,565 +88,223 @@ class DataProvider(DataModule, Generic[T]):
             log_level=log_level,
         )
 
-        # Initialize provider status and connection config
-        self._provider_status: ProviderStatus = ProviderStatus.DISCONNECTED
-        self._connection_config: Dict[str, Any] = {}
-
-        # Connect if auto_connect is True
-        if auto_connect:
-            self.connect(**connection_config)
+        # Intialize DataProvider attributes
+        self._config = config or {}
+        self._connection = None
+        self._data_methods = {}
+        
+        # Set initial status for the DataProvider instance
+        self.set_status(DataProviderConnectionStatus.DISCONNECTED)
 
     #################################################
     # Getter & Setter Methods
     #################################################
-    def get_provider_status(self) -> ProviderStatus:
+    def get_config(self) -> Dict[str, Any]:
         """
-        Get the current provider status.
+        Get the configuration dictionary.
 
-        :return: Current ProviderStatus enum value.
+        :return: The configuration dictionary.
         """
-        return self._provider_status
+        return self._config
 
-    def set_provider_status(self, status: ProviderStatus) -> None:
+    def set_config(self, config: Dict[str, Any]) -> None:
         """
-        Set the current provider status.
+        Set the configuration dictionary.
 
-        :param status: Desired ProviderStatus enum value.
+        :param config: The configuration dictionary.
+        :return: None.
         """
-        self._provider_status = status
-
-    def get_connection_config(self) -> Dict[str, Any]:
-        """
-        Get the current connection configuration.
-
-        :return: Current connection configuration as a dictionary.
-        """
-        return self._connection_config.copy()
-
-    def set_connection_config(self, config: Dict[str, Any]) -> None:
-        """
-        Set the connection configuration.
-
-        :param config: New connection configuration as a dictionary.
-        """
-        self._connection_config = config.copy()
-
-    #################################################
-    # Connection Management
-    #################################################
-    def connect(self, **config: Any) -> None:
-        """
-        Establish connection to the data source.
-
-        :param config: Connection configuration parameters.
-        :raises ConnectionError: If connection fails.
-        """
-        try:
-            self._connection_config.update(config)
-            self.get_logger().info(
-                f"[{self._name}] Connecting to data source..."
-            )
-            self._connect()
-            self._provider_status = ProviderStatus.CONNECTED
-            self.get_logger().info(
-                f"[{self._name}] Successfully connected."
-            )
-        except Exception as e:
-            self._provider_status = ProviderStatus.ERROR
-            self.get_logger().error(
-                f"[{self._name}] Connection failed: {e}"
-            )
-            raise ConnectionError(f"Failed to connect: {e}") from e
-
-    def disconnect(self) -> None:
-        """
-        Close connection to the data source.
-        """
-        try:
-            self.get_logger().info(
-                f"[{self._name}] Disconnecting from data source..."
-            )
-            self._disconnect()
-            self._provider_status = ProviderStatus.DISCONNECTED
-            self.get_logger().info(
-                f"[{self._name}] Successfully disconnected."
-            )
-        except Exception as e:
-            self.get_logger().error(
-                f"[{self._name}] Disconnect failed: {e}"
-            )
-            raise
-
-    def is_connected(self) -> bool:
-        """
-        Check if the provider is currently connected.
-
-        :return: True if connected, False otherwise.
-        """
-        return self._provider_status == ProviderStatus.CONNECTED
-
-    @contextmanager
-    def connection(self, **config: Any) -> Iterator["DataProvider[T]"]:
-        """
-        Context manager for automatic connection handling.
-
-        :param config: Connection configuration parameters.
-        :yields: The connected provider instance.
-
-        Example:
-            with provider.connection(host="localhost") as p:
-                data = p.get_by_id("123")
-        """
-        self.connect(**config)
-        try:
-            yield self
-        finally:
-            self.disconnect()
-
-    @abstractmethod
-    def _connect(self) -> None:
-        """
-        Internal method to establish connection to the data source.
-        Implement source-specific connection logic here.
-
-        :raises Exception: If connection fails.
-        """
-        pass
-
-    @abstractmethod
-    def _disconnect(self) -> None:
-        """
-        Internal method to close connection to the data source.
-        Implement source-specific disconnection logic here.
-        """
-        pass
-
-    #################################################
-    # Core Data Retrieval Methods
-    #################################################
-    @abstractmethod
-    def fetch(
-        self,
-        *args,
-        **kwargs,
-    ) -> QueryResult[T]:
-        """
-        Abstract method to retrieve data from the data source.
-
-        :param args: Positional arguments.
-        :param kwargs: Keyword arguments.
-        :raises QueryError: If the query operation fails.
-        """
-        raise NotImplementedError("Subclasses must implement this method.")
-
-    #################################################
-    # Optional Hook Methods
-    #################################################
-    def validate(self, data: T) -> bool:
-        """
-        Validate data before processing.
-        Override this method to implement custom validation logic.
-
-        :param data: Data to validate.
-        :return: True if valid, False otherwise.
-        :raises ValidationError: If validation fails critically.
-        """
-        return True
-
-    def transform(self, data: Any) -> T:
-        """
-        Transform raw data from the source into the target type T.
-        Override this method to implement custom transformation logic.
-
-        :param data: Raw data from the source.
-        :return: Transformed data of type T.
-        """
-        return data
+        self._config = config
     
-    def health_check(self) -> bool:
+    def update_config(self, key: str, value: Any) -> None:
         """
-        Perform a health check on the data source connection.
-        Override this method to implement source-specific health checks.
+        Update a specific configuration key-value pair.
 
-        :return: True if healthy, False otherwise.
+        :param key: The configuration key to update.
+        :param value: The new value for the configuration key.
+        :return: None.
         """
-        return self.is_connected()
+        self._config[key] = value
 
+    def get_connection(self) -> Any:
+        """
+        Get the connection object.
+
+        :return: The connection object.
+        """
+        return self._connection
+
+    def set_connection(self, connection: Any) -> None:
+        """
+        Set the connection object.
+
+        :param connection: The connection object.
+        :return: None.
+        """
+        self._connection = connection
+
+    def get_data_methods(self) -> Dict[str, Any]:
+        """
+        Get the data methods dictionary.
+
+        :return: The data methods dictionary.
+        """
+        return self._data_methods
+
+    def get_data_method(self, data_point: str) -> Optional[Callable]:
+        """
+        Get a data method from the data methods dictionary.
+
+        :param data_point: The name of the data method.
+        :return: The data method.
+        """
+        return self._data_methods.get(data_point)
+
+    def update_data_methods(self, new_methods: Dict[str, Callable]) -> None:
+        """
+        Update the data methods with new methods, merging with existing ones.
+        
+        :param new_methods: Dictionary of new data methods to add/update.
+        :return: None.
+        """
+        self._data_methods.update(new_methods)
+
+    def set_data_methods(self, data_methods: Dict[str, Any]) -> None:
+        """
+        Set the data methods dictionary.
+
+        :param data_methods: The data methods dictionary.
+        :return: None.
+        """
+        self._data_methods = data_methods
+
+    def add_data_method(self, data_point: str, method: Any) -> None:
+        """
+        Add a data method to the data methods dictionary.
+
+        :param data_point: The name of the data method.
+        :param method: The data method.
+        :return: None.
+        """
+        self._data_methods[data_point] = method
+
+    def delete_data_method(self, data_point: str) -> None:
+        """
+        Delete a data method from the data methods dictionary.
+
+        :param data_point: The name of the data method to delete.
+        :return: None.
+        """
+        if data_point in self._data_methods:
+            del self._data_methods[data_point]
+    
     #################################################
-    # Utility Methods
+    # Connection Methods
     #################################################
-    def fetch_or_raise(self, *args, **kwargs) -> QueryResult[T]:
-        """
-        Fetch data or raise an error if not found.
-
-        :param args: Positional arguments.
-        :param kwargs: Keyword arguments.
-        :return: The fetched data.
-        :raises QueryError: If the data is not found.
-        """
-        result = self.fetch(*args, **kwargs)
-        if result.is_empty():
-            raise QueryError("Data not found.")
-        return result
-
-    def with_retry(
-        self,
-        method: Callable[[], T],
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
-        parameters: dict = None,
-    ) -> T:
-        """
-        Execute an operation with retry logic.
-
-        :param method: Callable to execute.
-        :param max_retries: Maximum number of retry attempts.
-        :param retry_delay: Delay between retries in seconds.
-        :param parameters: Parameters to pass to the method.
-        :return: Result of the operation.
-        :raises DataProviderError: If all retries fail.
-        """
-        # Initialize variables
-        last_error: Optional[Exception] = None
-
-        # Retry loop
-        for attempt in range(max_retries):
-            try:
-                return method(**parameters)
-            except Exception as e:
-                last_error = e
-                self.get_logger().warning(
-                    f"[{self._name}] Attempt {attempt + 1}/{max_retries} failed: {e}"
-                )
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-
-        # Raise error if all retries failed
-        raise DataProviderError(
-            f"Operation failed after {max_retries} attempts: {last_error}"
-        ) from last_error
-
-
-#######################################################################
-# Asynchronous Data Provider Class
-#######################################################################
-class AsyncDataProvider(DataModule, Generic[T]):
-    """
-    Abstract base class for asynchronous data providers with standardized async API interface.
-
-    This class provides a unified interface for retrieving data from various sources
-    (APIs, databases, files, etc.) using async/await patterns. Subclasses must implement
-    the abstract methods to provide source-specific data retrieval logic.
-
-    Type Parameters:
-        T: The type of data entity this provider handles.
-
-    Example Usage:
-        class AsyncUserProvider(AsyncDataProvider[User]):
-            async def _connect(self) -> None:
-                self._db = await Database.connect(...)
-
-            async def get_by_id(self, identifier: str) -> Optional[User]:
-                return await self._db.users.find_one(id=identifier)
-
-            async def fetch(self, *args, **kwargs) -> QueryResult[User]:
-                ...
-    """
-
-    #################################################
-    # Class Attributes
-    #################################################
-    _name: str = "AsyncDataProvider"
-    _type: str = "AsyncDataProvider"
-
-    #################################################
-    # Constructor
-    #################################################
-    def __init__(
-        self,
-        instance_id: Optional[str] = None,
-        logger: Optional[logging.Logger] = None,
-        log_level: Optional[int] = logging.INFO,
-        connection_config: Optional[Dict[str, Any]] = None,
-        auto_connect: bool = False,
-    ) -> None:
-        """
-        Initialize the async data provider.
-
-        :param instance_id: Unique identifier for this provider instance.
-        :param logger: Logger instance for logging operations.
-        :param log_level: Logging level for the provider.
-        :param connection_config: Connection configuration parameters.
-        :param auto_connect: If True, automatically connect on initialization.
-        """
-        # Initialize the base DataModule
-        super().__init__(
-            instance_id=instance_id,
-            logger=logger,
-            log_level=log_level,
-        )
-
-        # Initialize provider status and connection config
-        self._provider_status: ProviderStatus = ProviderStatus.DISCONNECTED
-        self._connection_config: Dict[str, Any] = {}
-
-        # Connect if auto_connect is True
-        if auto_connect:
-            # Note: This would need to be awaited in practice
-            # For now, we'll just set up the config
-            self._connection_config = connection_config or {}
-
-    #################################################
-    # Getter & Setter Methods
-    #################################################
-    def get_provider_status(self) -> ProviderStatus:
-        """
-        Get the current provider status.
-
-        :return: Current ProviderStatus enum value.
-        """
-        return self._provider_status
-
-    def set_provider_status(self, status: ProviderStatus) -> None:
-        """
-        Set the current provider status.
-
-        :param status: Desired ProviderStatus enum value.
-        """
-        self._provider_status = status
-
-    def get_connection_config(self) -> Dict[str, Any]:
-        """
-        Get the current connection configuration.
-
-        :return: Current connection configuration as a dictionary.
-        """
-        return self._connection_config.copy()
-
-    def set_connection_config(self, config: Dict[str, Any]) -> None:
-        """
-        Set the connection configuration.
-
-        :param config: New connection configuration as a dictionary.
-        """
-        self._connection_config = config.copy()
-
-    #################################################
-    # Connection Management (Async)
-    #################################################
-    async def connect(self, **config: Any) -> None:
-        """
-        Establish connection to the data source asynchronously.
-
-        :param config: Connection configuration parameters.
-        :raises ConnectionError: If connection fails.
-        """
-        try:
-            self._connection_config.update(config)
-            self.get_logger().info(
-                f"[{self._name}] Connecting to data source..."
-            )
-            await self._connect()
-            self._provider_status = ProviderStatus.CONNECTED
-            self.get_logger().info(
-                f"[{self._name}] Successfully connected."
-            )
-        except Exception as e:
-            self._provider_status = ProviderStatus.ERROR
-            self.get_logger().error(
-                f"[{self._name}] Connection failed: {e}"
-            )
-            raise ConnectionError(f"Failed to connect: {e}") from e
-
-    async def disconnect(self) -> None:
-        """
-        Close connection to the data source asynchronously.
-        """
-        try:
-            self.get_logger().info(
-                f"[{self._name}] Disconnecting from data source..."
-            )
-            await self._disconnect()
-            self._provider_status = ProviderStatus.DISCONNECTED
-            self.get_logger().info(
-                f"[{self._name}] Successfully disconnected."
-            )
-        except Exception as e:
-            self.get_logger().error(
-                f"[{self._name}] Disconnect failed: {e}"
-            )
-            raise
-
     def is_connected(self) -> bool:
         """
-        Check if the provider is currently connected.
+        Check if the data provider is connected to the data source.
 
         :return: True if connected, False otherwise.
         """
-        return self._provider_status == ProviderStatus.CONNECTED
+        return self._connection is not None
 
-    @contextmanager
-    def connection(self, **config: Any) -> Iterator["AsyncDataProvider[T]"]:
+    def connect(self, *args, **kwargs) -> None:
         """
-        Synchronous context manager for automatic connection handling.
-        Note: For async context management, use async_connection() instead.
+        Safely Connect to the data source.
 
-        :param config: Connection configuration parameters.
-        :yields: The connected provider instance.
-
-        Example:
-            with provider.connection(host="localhost") as p:
-                # Use synchronous methods only
-                pass
+        :param args: Positional arguments for connection.
+        :param kwargs: Keyword arguments for connection.
+        :return: None.
+        :raise ConnectionError: If connection fails.
         """
-        # This is a synchronous context manager for compatibility
-        # In practice, you'd use async_connection() for async operations
-        self._connection_config.update(config)
         try:
-            yield self
-        finally:
-            pass  # Actual connection handled by async methods
+            self._connect(*args, **kwargs)
+            self.set_status(status=DataProviderConnectionStatus.CONNECTED)
+        except Exception as e:
+            raise DataProviderConnectionError(f"Failed to connect to data source: {e}")
 
-    async def async_connection(self, **config: Any):
+    @abstractmethod
+    def _connect(self, *args, **kwargs):
         """
-        Asynchronous context manager for automatic connection handling.
-
-        :param config: Connection configuration parameters.
-        :yields: The connected provider instance.
-
-        Example:
-            async with provider.async_connection(host="localhost") as p:
-                data = await p.fetch()
+        Abstract method to connect to the data source.
         """
-        await self.connect(**config)
+        raise NotImplementedError("Subclasses must implement this method")
+
+    def disconnect(self, *args, **kwargs) -> None:
+        """
+        Safely disconnect from the data source.
+
+        :param args: Positional arguments for connection.
+        :param kwargs: Keyword arguments for connection.
+        :return: None.
+        :raise ConnectionError: If connection fails.
+        """
         try:
-            yield self
-        finally:
-            await self.disconnect()
-
-    #################################################
-    # Abstract Methods - Must be implemented by subclasses
-    #################################################
-    @abstractmethod
-    async def _connect(self) -> None:
-        """
-        Internal method to establish connection to the data source asynchronously.
-        Implement source-specific connection logic here.
-
-        :raises Exception: If connection fails.
-        """
-        pass
+            self._disconnect(*args, **kwargs)
+            self.set_status(status=DataProviderConnectionStatus.DISCONNECTED)
+        except Exception as e:
+            raise DataProviderConnectionError(f"Failed to disconnect from data source: {e}")
 
     @abstractmethod
-    async def _disconnect(self) -> None:
+    def _disconnect(self, *args, **kwargs):
         """
-        Internal method to close connection to the data source asynchronously.
-        Implement source-specific disconnection logic here.
+        Abstract method to disconnect from the data source.
         """
-        pass
+        raise NotImplementedError("Subclasses must implement this method")
+            
+    def refresh_connection(self, *args, **kwargs) -> None:
+        """
+        Refresh the connection.
 
-    @abstractmethod
-    async def fetch(
-        self,
-        *args,
-        **kwargs,
-    ) -> QueryResult[T]:
+        :param args: Positional arguments for connection.
+        :param kwargs: Keyword arguments for connection.
+        :return: None.
+        :raise ConnectionError: If connection fails.
         """
-        Abstract method to retrieve data from the data source asynchronously.
+        self.disconnect(*args, **kwargs)
+        self.connect(*args, **kwargs)
 
-        :param args: Positional arguments.
-        :param kwargs: Keyword arguments.
-        :raises QueryError: If the query operation fails.
+    
+    #################################################
+    # Context Management
+    #################################################
+    def __enter__(self) -> "DataProvider":
         """
-        raise NotImplementedError("Subclasses must implement this method.")
+        Enter the runtime context related to this object. Automatically connects to the data source.
+        """
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """
+        Exit the runtime context related to this object. Automatically disconnects from the data source.
+        """
+        self.disconnect()
 
     #################################################
-    # Optional Hook Methods (Async)
+    # Core Instance Method: Fetch Data
     #################################################
-    async def validate(self, data: T) -> bool:
+    def fetch_data(self, data_point: str, return_data_type: type, *args, **kwargs) -> Any:
         """
-        Validate data before processing asynchronously.
-        Override this method to implement custom validation logic.
+        Base method to fetch data based on the data point and return type.
 
-        :param data: Data to validate.
-        :return: True if valid, False otherwise.
-        :raises ValidationError: If validation fails critically.
+        :param data_point: str: The data point to fetch.
+        :param return_data_type: type: The type of data to return.
+        :param args: Tuple: Positional arguments for fetching data.
+        :param kwargs: Dict: Keyword arguments for fetching data.
+        :return: The fetched data.
         """
-        return True
+        # Extract the corresponding data method
+        data_method = self.get_data_method(data_point=data_point)
+        if data_method is None:
+            raise DataMethodNotFoundError(f"Data method for data point '{data_point}' not found.")
+        
+        # Retrieve the data
+        data = data_method(*args, **kwargs)
 
-    async def transform(self, data: Any) -> T:
-        """
-        Transform raw data from the source into the target type T asynchronously.
-        Override this method to implement custom transformation logic.
-
-        :param data: Raw data from the source.
-        :return: Transformed data of type T.
-        """
+        # Check the return data type
+        if not isinstance(data, return_data_type):
+            raise ReturnDataTypeNotMatchedError(f"Data type mismatch. Expected {return_data_type}, got {type(data)}.")
+        
         return data
 
-    async def health_check(self) -> bool:
-        """
-        Perform a health check on the data source connection asynchronously.
-        Override this method to implement source-specific health checks.
-
-        :return: True if healthy, False otherwise.
-        """
-        return self.is_connected()
-
-    #################################################
-    # Utility Methods (Async)
-    #################################################
-    async def fetch_or_raise(self, *args, **kwargs) -> QueryResult[T]:
-        """
-        Fetch data or raise an error if not found asynchronously.
-
-        :param args: Positional arguments.
-        :param kwargs: Keyword arguments.
-        :return: The fetched data.
-        :raises QueryError: If the data is not found.
-        """
-        result = await self.fetch(*args, **kwargs)
-        if result.is_empty():
-            raise QueryError("Data not found.")
-        return result
-
-    async def with_retry(
-        self,
-        operation: Callable[[], T],
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
-    ) -> T:
-        """
-        Execute an operation with retry logic asynchronously.
-
-        :param operation: Callable to execute.
-        :param max_retries: Maximum number of retry attempts.
-        :param retry_delay: Delay between retries in seconds.
-        :return: Result of the operation.
-        :raises DataProviderError: If all retries fail.
-        """
-        import asyncio
-
-        # Initialize variables
-        last_error: Optional[Exception] = None
-
-        # Retry loop
-        for attempt in range(max_retries):
-            try:
-                # If operation is async, await it
-                if asyncio.iscoroutinefunction(operation):
-                    return await operation()
-                else:
-                    return operation()
-            except Exception as e:
-                last_error = e
-                self.get_logger().warning(
-                    f"[{self._name}] Attempt {attempt + 1}/{max_retries} failed: {e}"
-                )
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(retry_delay)
-
-        # Raise error if all retries failed
-        raise DataProviderError(
-            f"Operation failed after {max_retries} attempts: {last_error}"
-        ) from last_error
