@@ -4,19 +4,20 @@
 # Description: Data Retrieval Module package initialization
 # Author: AbigailWilliams1692
 # Created: 2026-01-14
-# Updated: 2026-01-14
+# Updated: 2026-01-18
 #######################################################################
 
 #######################################################################
 # Import Core Classes
 #######################################################################
-from data_retrieval.model.data_provider import DataProvider, AsyncDataProvider
+from data_retrieval.model.data_provider import DataProvider
 from data_retrieval.model.data_module import DataModule
-from data_retrieval.model.query_result import QueryResult
 from data_retrieval.model.exceptions import (
     DataProviderError,
     DataProviderConnectionError,
     DataFetchError,
+    DataMethodNotFoundError,
+    ReturnDataTypeNotMatchedError,
     ValidationError
 )
 
@@ -24,10 +25,10 @@ from data_retrieval.model.exceptions import (
 # Import Data Provider Implementations
 #######################################################################
 # REST API providers
-from data_retrieval.data_provider.rest_api import RestAPI_DataProvider, RestAPI_AsyncDataProvider
+from data_retrieval.data_provider.rest_api import RestAPI_DataProvider
 
 # Database providers
-from data_retrieval.data_provider.database import Database_DataProvider, Database_AsyncDataProvider, DatabaseConfig
+from data_retrieval.data_provider.database import Database_DataProvider
 
 #######################################################################
 # Public API
@@ -35,24 +36,21 @@ from data_retrieval.data_provider.database import Database_DataProvider, Databas
 __all__ = [
     # Core classes
     "DataProvider",
-    "AsyncDataProvider", 
     "DataModule",
-    "QueryResult",
     
     # Exceptions
     "DataProviderError",
     "DataProviderConnectionError",
     "DataFetchError",
+    "DataMethodNotFoundError",
+    "ReturnDataTypeNotMatchedError",
     "ValidationError",
     
     # REST API providers
     "RestAPI_DataProvider",
-    "RestAPI_AsyncDataProvider",
     
     # Database providers
     "Database_DataProvider",
-    "Database_AsyncDataProvider",
-    "DatabaseConfig",
 ]
 
 #######################################################################

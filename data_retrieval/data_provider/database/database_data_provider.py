@@ -12,20 +12,15 @@
 #######################################################################
 # Standard Packages
 import datetime
-from itertools import count
 import logging
-from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Union
-from contextlib import contextmanager
-from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 # Third-party Packages
 
 
 # Local Packages
-from data_retrieval.model.data_provider import DataProvider, AsyncDataProvider
-from data_retrieval.model.query_result import QueryResult
-from data_retrieval.model.exceptions import DataProviderConnectionError, DataFetchError, ValidationError
+from data_retrieval.model.data_provider import DataProvider
 
 
 #######################################################################

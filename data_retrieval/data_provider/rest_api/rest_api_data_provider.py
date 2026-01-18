@@ -19,9 +19,9 @@ from typing import Any, Dict, List, Optional
 # Third-party Packages
 import requests
 from requests import Response
-from requests.adapters import HTTP
+from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
-from urllib.util.retry import Retry
+from urllib3.util import Retry
 
 # Local Packages
 from data_retrieval.model.data_provider import DataProvider
@@ -53,7 +53,7 @@ class RestAPI_DataProvider(DataProvider, ABC):
         instance_id: Optional[int] = None,
         logger: Optional[logging.Logger] = None,
         log_level: Optional[int] = logging.INFO,
-        base_url: str = "",
+        base_url: Optional[str] = "",
         headers: Optional[Dict[str, str]] = None,
         auth: Optional[Any] = None,
         timeout: int = 30,
@@ -92,7 +92,7 @@ class RestAPI_DataProvider(DataProvider, ABC):
         )
         
         # Initialize REST API specific attributes
-        self.__base_url = base_url.rstrip("/")
+        self._base_url = base_url or self.__base_url
         self._default_headers = headers or {}
         self._auth = auth
         self._timeout = timeout
@@ -109,7 +109,7 @@ class RestAPI_DataProvider(DataProvider, ABC):
             status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
         )
-        adapter = HTTP(max_retries=retry_strategy)
+        adapter = HTTPAdapter(max_retries=retry_strategy)
         self.get_connection().mount("http://", adapter)
         self.get_connection().mount("https://", adapter)
 
