@@ -13,7 +13,7 @@
 # Standard Packages
 import logging
 from abc import ABC
-from collections.abc import Callable, Generator
+from collections.abc import Generator
 from typing import Any, Dict, List, Optional
 
 # Third-party Packages
@@ -53,9 +53,7 @@ class RestAPI_DataProvider(DataProvider, ABC):
         instance_id: Optional[int] = None,
         logger: Optional[logging.Logger] = None,
         log_level: Optional[int] = logging.INFO,
-        base_url: Optional[str] = "",
-        headers: Optional[Dict[str, str]] = None,
-        auth: Optional[Any] = None,
+        base_url: Optional[str] = None,
         timeout: int = 30,
         max_retries: int = 3,
         retry_backoff_factor: float = 0.3,
@@ -66,11 +64,9 @@ class RestAPI_DataProvider(DataProvider, ABC):
         
         :param instance_id: Unique identifier for this provider instance.
         :param logger: Logger instance for logging operations.
-        :param log_level: Logging level for the provider.
+        :param log_level: Logging level for the data provider.
         :param data_methods: Dictionary of data retrieval methods.
         :param base_url: Base URL for the REST API.
-        :param headers: Default headers to include in requests.
-        :param auth: Authentication credentials.
         :param timeout: Request timeout in seconds.
         :param max_retries: Maximum number of retry attempts.
         :param retry_backoff_factor: Backoff factor for retry delays.
@@ -93,8 +89,6 @@ class RestAPI_DataProvider(DataProvider, ABC):
         
         # Initialize REST API specific attributes
         self._base_url = base_url or self.__base_url
-        self._default_headers = headers or {}
-        self._auth = auth
         self._timeout = timeout
         self._max_retries = max_retries
         self._retry_backoff_factor = retry_backoff_factor
@@ -244,7 +238,7 @@ class RestAPI_DataProvider(DataProvider, ABC):
         :return: the Authentication.
         """
         if authentication_type == "HTTPBasicAuth":
-            return self.generate_headers(*args, **kwargs)
+            return self.generate_http_authentication(*args, **kwargs)
         else:
             return None
 

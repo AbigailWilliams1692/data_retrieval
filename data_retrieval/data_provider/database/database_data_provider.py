@@ -4,7 +4,7 @@
 # Description: Database data provider implementations
 # Author: AbigailWilliams1692
 # Created: 2026-01-14
-# Updated: 2026-01-14
+# Updated: 2026-01-19
 #######################################################################
 
 #######################################################################
@@ -112,7 +112,7 @@ class Database_DataProvider(DataProvider, ABC):
                 raise TypeError(f"Unsupported value type: {type(value)} for parameter '{key}'")
 
             # Replace all the placeholders in the SQL string
-            sql = sql.replace(old=placeholder, new=value_to_replace, count=-1)
+            sql = sql.replace(placeholder, value_to_replace, count=-1)
 
         return sql
 

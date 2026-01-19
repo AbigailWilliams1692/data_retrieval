@@ -4,7 +4,7 @@
 # Description: Abstract base class for aall data modules
 # Author: AbigailWilliams1692
 # Created: 2025-11-13
-# Updated: 2026-01-18
+# Updated: 2026-01-19
 #######################################################################
 
 #######################################################################
@@ -49,7 +49,6 @@ class DataModule(ABC):
         """
         # DataProvider ID
         self._instance_id = instance_id or id(self)
-        
 
         # Log Level
         self._log_level = log_level
@@ -78,7 +77,6 @@ class DataModule(ABC):
         :return: str: Type of the data module.
         """
         return self.__type
-
 
     def get_instance_id(self) -> str:
         """

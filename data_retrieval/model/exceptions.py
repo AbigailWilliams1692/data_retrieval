@@ -4,7 +4,7 @@
 # Description: Exception classes for data providers
 # Author: AbigailWilliams1692
 # Created: 2026-01-14
-# Updated: 2026-01-18
+# Updated: 2026-01-19
 #######################################################################
 
 #######################################################################
@@ -12,24 +12,20 @@
 #######################################################################
 class DataProviderError(Exception):
     """Base exception for data provider errors."""
-
     pass
 
 
 class DataProviderConnectionError(DataProviderError):
     """Raised when connection to data source fails."""
-
     pass
 
 
 class DataFetchError(DataProviderError):
     """Raised when a query operation fails."""
-
     pass
 
 class DataMethodNotFoundError(DataProviderError):
     """Raised when a requested data method is not found."""
-
     pass
 
 class ReturnDataTypeNotMatchedError(DataProviderError):
@@ -39,5 +35,4 @@ class ReturnDataTypeNotMatchedError(DataProviderError):
 
 class ValidationError(DataProviderError):
     """Raised when data validation fails."""
-
     pass

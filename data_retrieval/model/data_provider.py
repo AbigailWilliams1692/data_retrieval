@@ -38,7 +38,6 @@ class DataProviderConnectionStatus(Enum):
     """
     Enumeration of provider connection states.
     """
-
     DISCONNECTED = "disconnected"
     CONNECTED = "connected"
     ERROR = "error"
@@ -124,7 +123,7 @@ class DataProvider(DataModule):
         :param value: The new value for the configuration key.
         :return: None.
         """
-        self._config[key] = value
+        self._config.update({key: value})
 
     def get_connection(self) -> Any:
         """
@@ -186,7 +185,11 @@ class DataProvider(DataModule):
         :param method: The data method.
         :return: None.
         """
-        self._data_methods[data_point] = method
+        self._data_methods.update(
+            {
+                data_point: method,
+            }
+        )
 
     def delete_data_method(self, data_point: str) -> None:
         """
