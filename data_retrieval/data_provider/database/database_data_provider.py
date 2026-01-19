@@ -18,7 +18,6 @@ from typing import Any, Dict, List, Optional
 
 # Third-party Packages
 
-
 # Local Packages
 from data_retrieval.model.data_provider import DataProvider
 
