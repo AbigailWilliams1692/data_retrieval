@@ -7,7 +7,7 @@ name = "data-retrieval-module"
 version = "1.0.0"
 description = "A standardized interface for data providers with sync and async support"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "MIT"
 authors = [
     {name = "AbigailWilliams1692", email = "abigail.williams@example.com"}
 ]
@@ -18,7 +18,6 @@ keywords = ["data", "retrieval", "provider", "async", "sync", "database", "api"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",

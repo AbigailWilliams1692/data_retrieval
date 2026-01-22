@@ -109,14 +109,11 @@ def clean_build_artifacts():
 
 
 def build_package():
-    """Build the package."""
+    """Build the package using modern build system."""
     print("Building package...")
     
-    # Build source distribution
-    run_command("python setup.py sdist")
-    
-    # Build wheel distribution
-    run_command("python setup.py bdist_wheel")
+    # Use python -m build for modern building
+    run_command("python -m build")
     
     print("✅ Package built successfully")
     return True
