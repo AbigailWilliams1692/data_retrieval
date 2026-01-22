@@ -1,0 +1,17 @@
+# Core dependencies for Data Retrieval Module
+# Minimum required dependencies for basic functionality
+
+# For Python < 3.10 compatibility
+typing-extensions>=4.0.0; python_version<"3.10"
+
+# REST API support
+requests>=2.28.0
+
+# Optional: For async operations (install with pip install data-retrieval-module[async])
+# aiohttp>=3.8.0
+# aiosqlite>=0.19.0
+# asyncpg>=0.28.0
+
+# Optional: Database support (install with pip install data-retrieval-module[database])
+# psycopg2-binary>=2.9.0
+# PyMySQL>=1.0.0
