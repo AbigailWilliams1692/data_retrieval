@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "data-retrieval-module"
-version = "1.0.0"
+version = "1.0.1"
 description = "A standardized interface for data providers with sync and async support"
 readme = "README.md"
 license = "MIT"
@@ -33,6 +33,7 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "typing-extensions>=4.0.0; python_version<'3.10'",
+    "forex-python>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -79,7 +80,7 @@ Repository = "https://github.com/AbigailWilliams1692/data-retrieval-module"
 Changelog = "https://github.com/AbigailWilliams1692/data-retrieval-module/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
-packages = ["data_retrieval", "data_retrieval.model"]
+packages = ["data_retrieval", "data_retrieval.model", "data_retrieval.foreign_exchange", "data_retrieval.utils"]
 
 [tool.setuptools.package-data]
 data_retrieval = ["py.typed"]

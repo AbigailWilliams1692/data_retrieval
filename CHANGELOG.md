@@ -42,6 +42,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD ready setup
 - Package publishing configuration
 
+## [1.0.1] - 2026-01-25
+
+### Added
+- Foreign Exchange data provider module
+  - `Forex_DataProvider_Base` abstract base class for forex data providers
+  - `ForexPython_DataProvider` concrete implementation using Python libraries
+  - `Forex_DataProvider_Wrapper` wrapper for enhanced functionality
+- Utility modules
+  - `date_utils` module for date/time utilities
+- Enhanced data provider wrapper functionality
+- Examples for forex data sources
+
+### Features
+- **Forex Data Support**: Complete foreign exchange data provider framework
+- **Utility Functions**: Date and time utilities for data processing
+- **Enhanced Wrappers**: Improved data provider wrapper capabilities
+- **Example Code**: Forex data source examples and usage patterns
+
+### Documentation
+- Added forex provider documentation
+- Updated package exports to include new modules
+- Enhanced examples with forex data sources
+
 ## [Unreleased]
 
 ### Planned

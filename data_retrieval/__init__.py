@@ -30,6 +30,13 @@ from data_retrieval.data_provider.rest_api import RestAPI_DataProvider
 # Database providers
 from data_retrieval.data_provider.database import Database_DataProvider
 
+# Foreign Exchange providers
+from data_retrieval.foreign_exchange import (
+    Forex_DataProvider_Base,
+    ForexPython_DataProvider,
+    Forex_DataProvider_Wrapper
+)
+
 #######################################################################
 # Public API
 #######################################################################
@@ -51,11 +58,16 @@ __all__ = [
     
     # Database providers
     "Database_DataProvider",
+    
+    # Foreign Exchange providers
+    "Forex_DataProvider_Base",
+    "ForexPython_DataProvider",
+    "Forex_DataProvider_Wrapper",
 ]
 
 #######################################################################
 # Version Information
 #######################################################################
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "AbigailWilliams1692"
 __email__ = "abigail.williams@example.com"

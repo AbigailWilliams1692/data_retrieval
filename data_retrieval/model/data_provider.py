@@ -77,7 +77,6 @@ class DataProvider(DataModule):
         :param instance_id: Unique identifier for this provider instance.
         :param logger: Logger instance for logging operations.
         :param log_level: Logging level for the provider.
-        :param data_methods: Dictionary of data retrieval methods.
         :param config: Additional configuration parameters.
         """
         # Initialize the base DataModule
