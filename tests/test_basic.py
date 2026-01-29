@@ -26,7 +26,7 @@ def test_version():
     import data_retrieval
     
     assert hasattr(data_retrieval, '__version__')
-    assert data_retrieval.__version__ == "1.0.1"
+    assert data_retrieval.__version__ == "1.0.2"
 
 # Test package structure
 def test_package_structure():
