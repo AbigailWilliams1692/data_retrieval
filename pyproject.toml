@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "data-retrieval-module"
-version = "1.0.1"
+version = "1.0.2"
 description = "A standardized interface for data providers with sync and async support"
 readme = "README.md"
 license = "MIT"
