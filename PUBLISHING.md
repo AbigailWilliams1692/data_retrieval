@@ -117,12 +117,12 @@ twine upload dist/*
 
 1. Update version in `pyproject.toml`:
    ```toml
-   version = "1.0.1"
+   version = "1.0.2"
    ```
 
 2. Update version in `setup.py`:
    ```python
-   version="1.0.1",
+   version="1.0.2",
    ```
 
 3. Update `CHANGELOG.md`
@@ -130,8 +130,8 @@ twine upload dist/*
 4. Commit changes:
    ```bash
    git add .
-   git commit -m "Bump version to 1.0.1"
-   git tag v1.0.1
+   git commit -m "Bump version to 1.0.2"
+   git tag v1.0.2
    git push origin main --tags
    ```
 
