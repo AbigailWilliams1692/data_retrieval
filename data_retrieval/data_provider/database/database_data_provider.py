@@ -67,26 +67,9 @@ class Database_DataProvider(DataProvider, ABC):
             **config    
         )
 
-        # Prepare the data methods
-        self.update_data_methods(
-            {
-                "sql_query": self.sql_query,
-            }
-        )
-
     ###################################################################
-    # Core Instance Method: SQL Query
+    # Utility Methods
     ###################################################################
-    @abstractmethod
-    def sql_query(self, sql: str, *args, **kwargs) -> Any:
-        """
-        Posts the SQL query to the database and retrieves data accordingly.
-
-        :param sql: the SQL query string.
-        :return: the queried data.
-        """
-        raise NotImplementedError("Subclasses must implement sql_query method.")
-
     def format_sql_query(self, sql: str, params: Dict[str, Any]) -> str:
         """
         Format the SQL query string with the given key-value pairs.
@@ -115,9 +98,6 @@ class Database_DataProvider(DataProvider, ABC):
 
         return sql
 
-    ###################################################################
-    # Utility Methods
-    ###################################################################
     @staticmethod
     def stringify_a_list_of_items_with_apostrophe(item_list: List[Any]) -> str:
         """
@@ -128,3 +108,14 @@ class Database_DataProvider(DataProvider, ABC):
         """
         item_str_list = [f"'{str(item)}'" for item in item_list]
         return ",".join(item_str_list)
+
+    @staticmethod
+    def generate_markers(size: int, marker: str = "?") -> str:
+        """
+        Generate placeholder markers joined by ','.
+        
+        :param size: Number of markers to generate.
+        :param marker: Marker string to use (default is "?").
+        :return: String of markers joined by commas.
+        """
+        return ",".join([marker] * size)
