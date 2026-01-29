@@ -28,13 +28,16 @@ from data_retrieval.model.exceptions import (
 from data_retrieval.data_provider.rest_api import RestAPI_DataProvider
 
 # Database providers
-from data_retrieval.data_provider.database import Database_DataProvider
+from data_retrieval.data_provider.database import (
+    Database_DataProvider,
+    SQLite3_DataProvider,
+)
 
 # Foreign Exchange providers
 from data_retrieval.foreign_exchange import (
     Forex_DataProvider_Base,
     ForexPython_DataProvider,
-    Forex_DataProvider_Wrapper
+    Forex_DataProvider_Wrapper,
 )
 
 #######################################################################
@@ -58,6 +61,7 @@ __all__ = [
     
     # Database providers
     "Database_DataProvider",
+    "SQLite3_DataProvider",
     
     # Foreign Exchange providers
     "Forex_DataProvider_Base",
@@ -70,4 +74,4 @@ __all__ = [
 #######################################################################
 __version__ = "1.0.2"
 __author__ = "AbigailWilliams1692"
-__email__ = "abigail.williams@example.com"
+__email__ = "alfred.xy1020@gmail.com"
